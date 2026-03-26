@@ -1,0 +1,11 @@
+TEST 3: Auto-detection
+=======================
+$ python -m depdrift
+Package                        Current             
+----------------------------------------------------
+requests                       ==2.28.1            
+flask                          >=2.0               
+
+Note: Auto-detected requirements.txt in current directory
+
+STATUS: PASS

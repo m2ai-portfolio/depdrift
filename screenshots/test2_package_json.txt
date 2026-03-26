@@ -1,0 +1,21 @@
+================================================================================
+TEST 2: Parse package.json
+================================================================================
+
+Command:
+  python -m depdrift --file /tmp/package.json
+
+Input File Content (/tmp/package.json):
+  {"dependencies": {"lodash": "4.17.21"}}
+
+Output:
+  Package                        Current             
+  ----------------------------------------------------
+  lodash                         4.17.21             
+
+Result: PASS
+Verification:
+  ✓ Package lodash is displayed
+  ✓ Version 4.17.21 is correctly shown
+  ✓ Output formatted as a table
+  ✓ Exit code: 0 (success)

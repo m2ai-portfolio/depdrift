@@ -1,0 +1,24 @@
+================================================================================
+TEST 4: Error Handling - No Manifest Files
+================================================================================
+
+Setup:
+  Created empty directory: /tmp/test_no_manifest
+  No manifest files present
+
+Command:
+  cd /tmp/test_no_manifest
+  python -m depdrift
+
+Output (stderr):
+  Error: No manifest file found. Provide --file or ensure pyproject.toml/requirements.txt/package.json exists.
+
+Exit Code: 2
+
+Result: PASS
+Verification:
+  ✓ Tool correctly detected absence of manifest files
+  ✓ Displayed appropriate error message
+  ✓ Error message mentions all supported file types
+  ✓ Exit code is 2 (as specified in requirements)
+  ✓ Error message provides clear guidance to user

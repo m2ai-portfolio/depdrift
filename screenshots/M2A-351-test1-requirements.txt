@@ -1,0 +1,13 @@
+TEST 1: Parse requirements.txt
+================================
+$ cat requirements.txt
+requests==2.28.1
+flask>=2.0
+
+$ python -m depdrift --file requirements.txt
+Package                        Current             
+----------------------------------------------------
+requests                       ==2.28.1            
+flask                          >=2.0               
+
+STATUS: PASS

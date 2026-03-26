@@ -1,0 +1,46 @@
+================================================================================
+TEST 5: Run pytest - Unit Tests for Parsers
+================================================================================
+
+Command:
+  python -m pytest tests/test_parsers.py -v
+
+Output:
+  ============================= test session starts ==============================
+  platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0
+  cachedir: .pytest_cache
+  rootdir: /home/apexaipc/projects/yce-harness/generations/metroplex-ideaforge-142
+  collecting ... collected 18 items
+
+  tests/test_parsers.py::TestRequirementsTxt::test_parse_simple_requirements PASSED [  5%]
+  tests/test_parsers.py::TestRequirementsTxt::test_parse_requirements_with_specifiers PASSED [ 11%]
+  tests/test_parsers.py::TestRequirementsTxt::test_parse_requirements_with_comments PASSED [ 16%]
+  tests/test_parsers.py::TestRequirementsTxt::test_parse_requirements_with_empty_lines PASSED [ 22%]
+  tests/test_parsers.py::TestRequirementsTxt::test_parse_requirements_with_extras PASSED [ 27%]
+  tests/test_parsers.py::TestRequirementsTxt::test_parse_requirements_skip_options PASSED [ 33%]
+  tests/test_parsers.py::TestPyprojectToml::test_parse_simple_pyproject PASSED [ 38%]
+  tests/test_parsers.py::TestPyprojectToml::test_parse_pyproject_no_dependencies PASSED [ 44%]
+  tests/test_parsers.py::TestPyprojectToml::test_parse_pyproject_no_project_section PASSED [ 50%]
+  tests/test_parsers.py::TestPyprojectToml::test_parse_pyproject_with_extras PASSED [ 55%]
+  tests/test_parsers.py::TestPackageJson::test_parse_simple_package_json PASSED [ 61%]
+  tests/test_parsers.py::TestPackageJson::test_parse_package_json_with_dev_dependencies PASSED [ 66%]
+  tests/test_parsers.py::TestPackageJson::test_parse_package_json_no_dependencies PASSED [ 72%]
+  tests/test_parsers.py::TestPackageJson::test_parse_package_json_version_prefixes PASSED [ 77%]
+  tests/test_parsers.py::TestParseManifest::test_parse_manifest_requirements_txt PASSED [ 83%]
+  tests/test_parsers.py::TestParseManifest::test_parse_manifest_pyproject_toml PASSED [ 88%]
+  tests/test_parsers.py::TestParseManifest::test_parse_manifest_package_json PASSED [ 94%]
+  tests/test_parsers.py::TestParseManifest::test_parse_manifest_unsupported_file PASSED [100%]
+
+  ============================== 18 passed in 0.03s ==============================
+
+Result: PASS
+Verification:
+  ✓ All 18 unit tests passed
+  ✓ Test coverage includes:
+    - requirements.txt parsing (6 tests)
+    - pyproject.toml parsing (4 tests)
+    - package.json parsing (4 tests)
+    - Auto-detect manifest function (4 tests)
+  ✓ Edge cases tested: comments, empty lines, extras, version specifiers
+  ✓ Error cases tested: unsupported files
+  ✓ Test execution time: 0.03s (very fast)

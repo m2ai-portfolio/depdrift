@@ -1,0 +1,11 @@
+TEST 2: Parse package.json
+===========================
+$ cat package.json
+{"dependencies": {"lodash": "4.17.21"}}
+
+$ python -m depdrift --file package.json
+Package                        Current             
+----------------------------------------------------
+lodash                         4.17.21             
+
+STATUS: PASS

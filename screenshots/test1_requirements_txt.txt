@@ -1,0 +1,23 @@
+================================================================================
+TEST 1: Parse requirements.txt
+================================================================================
+
+Command:
+  python -m depdrift --file /tmp/requirements.txt
+
+Input File Content (/tmp/requirements.txt):
+  requests==2.28.1
+  flask>=2.0
+
+Output:
+  Package                        Current             
+  ----------------------------------------------------
+  requests                       ==2.28.1            
+  flask                          >=2.0               
+
+Result: PASS
+Verification:
+  ✓ Both packages (requests and flask) are displayed
+  ✓ Versions are correctly shown (==2.28.1 and >=2.0)
+  ✓ Output formatted as a table with proper columns
+  ✓ Exit code: 0 (success)
