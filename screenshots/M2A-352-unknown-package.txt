@@ -1,0 +1,24 @@
+===========================================
+Feature 2: Unknown Package Handling
+===========================================
+
+Command: python -m depdrift --file requirements.txt --versions versions.json
+
+Input:
+------
+requirements.txt contains "nonexistent==1.0"
+versions.json does NOT contain "nonexistent"
+
+Output:
+-------
+Package                        Current              Latest               Distance       
+---------------------------------------------------------------------------------------
+requests                       2.28.1               2.30.0               minor          
+flask                          2.0                  2.3.0                minor          
+nonexistent                    1.0                  <missing>            unknown        
+
+Verification:
+-------------
+✓ nonexistent package correctly shown as "<missing>" for Latest
+✓ Distance correctly shown as "unknown"
+✓ Other packages still processed correctly

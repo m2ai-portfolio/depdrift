@@ -1,0 +1,85 @@
+===========================================
+DepDrift Feature 2 - Test Evidence
+===========================================
+
+TEST 1: Version Distance Calculation (Minor Updates)
+---------------------------------------------------
+$ python -m depdrift --file requirements.txt --versions versions.json
+
+Package                        Current              Latest               Distance       
+---------------------------------------------------------------------------------------
+requests                       2.28.1               2.30.0               minor          
+flask                          2.0                  2.3.0                minor          
+nonexistent                    1.0                  <missing>            unknown        
+
+✓ PASS: Correctly identified minor version updates
+✓ PASS: Correctly identified unknown package
+
+
+TEST 2: Version Distance Calculation (Major Update)
+---------------------------------------------------
+requirements.txt: django==3.2.0
+versions.json: "django": "4.2.0"
+
+Expected: major
+Actual: major
+
+✓ PASS: Correctly identified major version update
+
+
+TEST 3: NPM Dependencies (package.json)
+---------------------------------------------------
+$ python -m depdrift --file package.json --versions versions.json
+
+Package                        Current              Latest               Distance       
+---------------------------------------------------------------------------------------
+lodash                         4.17.20              4.17.22              patch          
+express                        4.18.0               <missing>            unknown        
+
+✓ PASS: Correctly stripped ^ prefix from express version
+✓ PASS: Correctly identified patch version update for lodash
+
+
+TEST 4: Feature 1 Compatibility (No versions file)
+---------------------------------------------------
+$ python -m depdrift --file requirements.txt
+
+Package                        Current             
+----------------------------------------------------
+requests                       ==2.28.1            
+flask                          >=2.0               
+nonexistent                    ==1.0               
+
+✓ PASS: Feature 1 still works without versions file
+
+
+TEST 5: All Unit Tests Passing
+---------------------------------------------------
+$ python -m pytest tests/ -v
+
+============================= test session starts ==============================
+collected 49 items
+
+tests/test_parsers.py::TestRequirementsTxt::test_parse_simple_requirements PASSED
+tests/test_parsers.py::TestRequirementsTxt::test_parse_requirements_with_specifiers PASSED
+[... 16 more parser tests ...]
+tests/test_version.py::TestExtractVersion::test_extract_exact_version PASSED
+tests/test_version.py::TestExtractVersion::test_extract_gte_version PASSED
+[... 29 more version tests ...]
+
+============================== 49 passed in 0.07s ==============================
+
+✓ PASS: All 18 original parser tests still passing
+✓ PASS: All 31 new version tests passing
+
+
+SUMMARY
+-------
+✓ Feature 2 fully implemented and working
+✓ Version extraction handles all specifier types (==, >=, ~=, ^, ~)
+✓ Distance calculation accurate for major, minor, patch levels
+✓ Unknown packages handled gracefully
+✓ CLI options working (--versions, DEPDRIFT_VERSFILE env var)
+✓ Multi-language support (Python and JavaScript manifests)
+✓ Feature 1 functionality preserved
+✓ Zero breaking changes

@@ -1,0 +1,34 @@
+===========================================
+Feature 2: Version Distance Calculator
+Live CLI Output
+===========================================
+
+Command: python -m depdrift --file requirements.txt --versions versions.json
+
+Input Files:
+-----------
+requirements.txt:
+  requests==2.28.1
+  flask>=2.0
+  django==3.2.0
+
+versions.json:
+  {
+    "requests": "2.30.0",
+    "flask": "2.3.0",
+    "django": "4.2.0"
+  }
+
+Output:
+-------
+Package                        Current              Latest               Distance       
+---------------------------------------------------------------------------------------
+requests                       2.28.1               2.30.0               minor          
+flask                          2.0                  2.3.0                minor          
+django                         3.2.0                4.2.0                major          
+
+Verification:
+-------------
+✓ requests: 2.28.1 → 2.30.0 (major=2 same, minor=28→30 different) = MINOR ✓
+✓ flask: 2.0 → 2.3.0 (major=2 same, minor=0→3 different) = MINOR ✓
+✓ django: 3.2.0 → 4.2.0 (major=3→4 different) = MAJOR ✓

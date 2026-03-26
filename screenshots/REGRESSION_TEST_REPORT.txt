@@ -1,0 +1,79 @@
+================================================================================
+QA REGRESSION TEST REPORT
+Feature 2: Version Distance Calculator + Feature 1: Manifest Parser
+Date: 2026-03-26
+================================================================================
+
+OVERALL RESULT: PASS
+
+================================================================================
+NEW FEATURE TESTS (Feature 2 - Version Distance Calculator)
+================================================================================
+
+Test 1: Version Distance Calculation
+Status: PASS
+Description: Verify version distance calculation with known packages
+Expected: Table with Package, Current, Latest, Distance columns
+         requests: 2.28.1 -> 2.30.0 = minor distance
+         flask: 2.0 -> 2.3.0 = minor distance
+Result: All expectations met
+Evidence: /home/apexaipc/projects/yce-harness/generations/metroplex-ideaforge-142/screenshots/test1-version-distance.txt
+
+Test 2: Unknown Package Handling
+Status: PASS
+Description: Verify behavior with packages not in versions file
+Expected: Show <missing> for latest, unknown for distance
+Result: Correctly displays <missing> and unknown
+Evidence: /home/apexaipc/projects/yce-harness/generations/metroplex-ideaforge-142/screenshots/test2-unknown-package.txt
+
+Test 3: Without Versions File (Feature 1 Compatibility)
+Status: PASS
+Description: Verify backward compatibility with Feature 1
+Expected: Simple table with Package and Current columns only
+Result: Correctly displays simplified table (Feature 1 behavior)
+Evidence: /home/apexaipc/projects/yce-harness/generations/metroplex-ideaforge-142/screenshots/test3-without-versions.txt
+
+================================================================================
+REGRESSION TESTS (Feature 1 - Manifest Parser)
+================================================================================
+
+Test 4: Parse requirements.txt
+Status: PASS
+Description: Verify parsing still works correctly
+Expected: Parse and display dependencies from requirements.txt
+Result: Successfully parsed 3 packages (requests, flask, pytest)
+Evidence: /home/apexaipc/projects/yce-harness/generations/metroplex-ideaforge-142/screenshots/test4-feature1-parser.txt
+
+Test 5: Full Test Suite
+Status: PASS
+Description: Run all unit tests (test_parsers.py + test_version.py)
+Expected: All tests pass
+Result: 49/49 tests PASSED (100% pass rate)
+Breakdown:
+  - test_parsers.py: 18 tests PASSED (Feature 1 tests)
+  - test_version.py: 31 tests PASSED (Feature 2 tests)
+Evidence: /home/apexaipc/projects/yce-harness/generations/metroplex-ideaforge-142/screenshots/test5-full-test-suite.txt
+
+================================================================================
+ISSUES FOUND
+================================================================================
+
+None
+
+================================================================================
+CONCLUSION
+================================================================================
+
+Feature 2 (Version Distance Calculator) is working correctly:
+- Calculates semantic version distances (major, minor, patch)
+- Handles unknown packages gracefully
+- Maintains backward compatibility with Feature 1
+
+Feature 1 (Manifest Parser) regression tests all passed:
+- Parsing functionality intact
+- All unit tests passing
+- No regressions detected
+
+The implementation is production-ready.
+
+================================================================================

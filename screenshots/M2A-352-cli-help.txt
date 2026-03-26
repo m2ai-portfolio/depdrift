@@ -1,0 +1,21 @@
+===========================================
+Feature 2: CLI Help Output
+===========================================
+
+$ python -m depdrift --help
+
+Usage: python -m depdrift [OPTIONS]
+
+  DepDrift - Check how stale your dependencies are.
+
+  Parses a dependency manifest and shows current versions.
+
+Options:
+  --file PATH      Path to manifest file (requirements.txt, pyproject.toml, or
+                   package.json)
+  --versions PATH  Path to versions JSON file containing latest versions
+  --help           Show this message and exit.
+
+✓ --versions option successfully added
+✓ Feature 1 --file option still present
+✓ CLI help text updated

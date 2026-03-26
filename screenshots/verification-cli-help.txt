@@ -1,0 +1,10 @@
+Usage: python -m depdrift [OPTIONS]
+
+  DepDrift - Check how stale your dependencies are.
+
+  Parses a dependency manifest and shows current versions.
+
+Options:
+  --file PATH  Path to manifest file (requirements.txt, pyproject.toml, or
+               package.json)
+  --help       Show this message and exit.
