@@ -1,0 +1,156 @@
+
+
+# DepDrift - App Specification
+
+## Overview
+DepDrift is a single‑binary CLI tool that reads a project’s dependency manifest (requirements.txt, pyproject.toml, or package.json), compares each declared version against a user‑supplied “latest versions” lookup file, and reports how far behind each dependency is — grouped by semantic version distance (patch, minor, major). The tool works entirely offline; the only external data it needs is a local JSON mapping of package → latest version, which a user can generate once with any method they prefer (e.g., a one‑time `pip index versions` run) and then reuse across projects.
+
+**Problem Statement**: Solo AI developers need a quick, dependency‑free way to see how stale their project’s packages are without setting up CI bots or registering for external services.  
+**Target Audience**: Individual developers maintaining multiple Python/Node projects who want a zero‑configuration, locally run staleness report.
+
+## Tech Stack
+- Python 3.11+ (uses stdlib `tomllib`, `json`, `argparse`)
+- Third‑party packages: `click` (CLI ergonomics), `packaging` (version parsing)
+- Testing: `pytest` (stdlib‑compatible, no external services)
+
+## Environment Setup
+
+### Prerequisites
+- Python 3.11 or newer
+- `pip` to install dependencies
+
+### Configuration
+| Environment Variable | Description | Default |
+|----------------------|-------------|---------|
+| `DEPDRIFT_VERSFILE`  | Path to the JSON file containing `{package: "latest_version"}` map. If unset, the tool looks for `versions.json` in the current working directory. | `versions.json` |
+| `DEPDRIFT_OUTPUT`    | Force output format: `table` or `json`. Overrides CLI flag. | `table` (if not set) |
+
+## Architecture
+```
++----------------+     +----------------+     +-----------------+
+|  CLI Entry     | --> |  Manifest       | --> |  Version Checker|
+|  (main.py)     |     |  Parsers        |     |  (version.py)   |
++----------------+     +-----------------+     +-----------------+
+                                    |
+                                    v
+                            +---------------+
+                            |  Output       |
+                            |  Formatter    |
+                            |  (output.py)  |
+                            +---------------+
+                                    |
+                                    v
+                            +---------------+
+                            |  Stdout/File  |
+                            +---------------+
+```
+
+## Core Features
+Exactly three features, each doable in one iteration.
+
+### Feature 1: Manifest Parser
+**Description**: Detect and parse `requirements.txt`, `pyproject.toml`, or `package.json` to extract a list of declared dependencies with their current versions.
+
+**Requirements**:
+- Accept a `--file <path>` argument; if omitted, search for the first manifest present in the cwd in the order: `pyproject.toml`, `requirements.txt`, `package.json`.
+- For each format, return a list of tuples `(name, current_version_str)`.
+- Ignore comments, empty lines, and extras markers (e.g., `package>=1.0[extra]` → `package>=1.0`).
+
+**Test Steps**:
+1. `echo "requests==2.28.1\n# comment\nflask>=2.0" > req.txt`  
+   `python -m depdrift --file req.txt`  
+   → Output table shows `requests 2.28.1` and `flask >=2.0` (version constraint parsed as lowest satisfying version `2.0.0`? Actually we treat constraint as is; for simplicity we capture raw string; later step will attempt to parse with `packaging.requirements.Requirement`.)
+2. `echo '{"dependencies": {"lodash": "4.17.21"}}' > package.json`  
+   `python -m depdrift --file package.json`  
+   → Table shows `lodash 4.17.21`.
+
+### Feature 2: Version Distance Calculator
+**Description**: Compare each parsed dependency’s current version against the latest version supplied in a local JSON lookup file (`{package: "latest_version"}`) and compute whether the gap is a patch, minor, or major update according to SemVer rules.
+
+**Requirements**:
+- Load the versions JSON from path given by `--versions <file>` or env `DEPDRIFT_VERSFILE`; file must contain a flat JSON object mapping package name → version string.
+- For each dependency, use `packaging.version.parse` to interpret both current and latest versions (ignore any version specifiers like `>=`, `~=`; take the left‑most version number if a specifier is present, e.g., `>=2.0` → `2.0.0`).
+- Compute distance:
+  - If `major` differs → `major`
+  - Else if `minor` differs → `minor`
+  - Else if `patch` differs → `patch`
+  - Else → `up-to-date`.
+- Skip packages not found in the lookup file (report as `unknown`).
+
+**Test Steps**:
+1. Create `versions.json`: `{"requests": "2.30.0", "flask": "2.3.0", "lodash": "4.17.22"}`.
+2. With the `req.txt` from Feature 1 test, run:  
+   `python -m depdrift --file req.txt --versions versions.json`  
+   → Table:  
+   ```
+   Package   Current   Latest   Distance
+   requests  2.28.1    2.30.0   minor
+   flask     >=2.0     2.3.0    minor   (note: current treated as 2.0.0)
+   ```
+3. Run with a missing entry:  
+   `echo "nonexistent==1.0" > tmp.txt`  
+   `python -m depdrift --file tmp.txt --versions versions.json`  
+   → Table shows `nonexistent 1.0  <missing>  unknown`.
+
+### Feature 3: Output Formatter
+**Description**: Render the dependency distance report either as a human‑readable ASCII table or as machine‑parseable JSON, selectable via flag or environment variable.
+
+**Requirements**:
+- Default output is an ASCII table with columns: `Package`, `Current`, `Latest`, `Distance`.
+- With `--json` (or `DEPDRIFT_OUTPUT=json`) emit a JSON array of objects:  
+  `[{"package": "requests", "current": "2.28.1", "latest": "2.30.0", "distance": "minor"}, ...]`.
+- Table output must align columns and truncate long version strings to 20 characters if needed.
+- Invalid combination (e.g., `--json` with unsupported flags) yields a clear error message and non‑zero exit code.
+
+**Test Steps**:
+1. Using the same `versions.json` and `req.txt` as above:  
+   `python -m depdrift --file req.txt --versions versions.json --json`  
+   → JSON output (pretty‑printed for readability) containing two objects with correct fields.
+2. `DEPDRIFT_OUTPUT=json python -m depdrift --file req.txt --versions versions.json`  
+   → Same JSON as previous step.
+3. Bad usage: `python -m depdrift` (no manifest)  
+   → Error: `No manifest file found. Provide --file or ensure pyproject.toml/requirements.txt/package.json exists.` and exit code 2.
+
+## Data Models
+```python
+from dataclasses import dataclass
+from typing import Optional
+
+@dataclass
+class Dependency:
+    name: str
+    current: str          # raw string from manifest (may contain specifiers)
+    current_parsed: Optional[str] = None  # normalized version (e.g., "2.28.1")
+    latest: Optional[str] = None
+    distance: Optional[str] = None  # "major" | "minor" | "patch" | "up-to-date" | "unknown"
+```
+
+## File Structure
+```
+depdrift/
+├── main.py            # CLI entry point (argparse/click)
+├── parsers.py         # Manifest parsing functions
+├── version.py         # Distance calculation logic
+├── output.py          # Table and JSON rendering
+├── models.py          # Dependency dataclass
+└── utils.py           # Helpers (version normalization, file discovery)
+tests/
+├── test_parsers.py
+├── test_version.py
+└── test_output.py
+```
+Total source files: 6 (under the 12‑file limit).
+
+## Success Criteria
+1. **Manifest detection**: Running the tool in a directory containing a `pyproject.toml` prints a table without needing `--file`.
+2. **Correct distance**: With a prepared `versions.json`, the tool reports `minor` for a version lagging by one minor, `major` for a major lag, and `up-to-date` when equal.
+3. **JSON output**: Invoking `--json` yields valid JSON that can be parsed by `jq` or Python’s `json.load`.
+4. **Graceful missing data**: Packages absent from the versions file are marked `unknown` and the tool still exits with code 0.
+5. **No external calls**: Running `strace -e trace=network python -m depdrift …` shows no network activity (verifiable by the agent).
+
+## Constraints & Notes
+- No external API calls — all processing uses local files only.
+- Target: working MVP in 5 build iterations (one iteration per feature plus integration).
+- Prioritize correct version parsing and distance calculation over fancy UI.
+- Only two third‑party packages (`click`, `packaging`) are used; everything else relies on the Python 3.11+ standard library.  
+- The tool is deliberately single‑process, single‑threaded, and stores no persistent state beyond the input files.
