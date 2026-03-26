@@ -1,0 +1,14 @@
+[
+  {
+    "package": "requests",
+    "current": "2.28.1",
+    "latest": "2.30.0",
+    "distance": "minor"
+  },
+  {
+    "package": "flask",
+    "current": "2.0",
+    "latest": "2.3.0",
+    "distance": "minor"
+  }
+]

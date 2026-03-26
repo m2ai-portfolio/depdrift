@@ -9,6 +9,7 @@ from pathlib import Path
 import click
 
 from .models import Dependency
+from .output import format_output
 from .parsers import parse_manifest
 from .utils import find_manifest_file
 from .version import check_versions, load_versions_file
@@ -27,7 +28,13 @@ from .version import check_versions, load_versions_file
     type=click.Path(exists=True, path_type=Path),
     help="Path to versions JSON file containing latest versions",
 )
-def main(file_path: Path = None, versions_path: Path = None):
+@click.option(
+    "--json",
+    "json_output",
+    is_flag=True,
+    help="Output results as JSON instead of ASCII table",
+)
+def main(file_path: Path = None, versions_path: Path = None, json_output: bool = False):
     """
     DepDrift - Check how stale your dependencies are.
 
@@ -61,6 +68,23 @@ def main(file_path: Path = None, versions_path: Path = None):
         for name, version in deps_list
     ]
 
+    # Determine output format
+    # Priority: --json flag > DEPDRIFT_OUTPUT env var > default (table)
+    if json_output:
+        output_format = "json"
+    else:
+        env_output = os.environ.get("DEPDRIFT_OUTPUT", "table")
+        output_format = env_output.lower()
+
+    # Validate output format
+    if output_format not in ["table", "json"]:
+        click.echo(
+            f"Error: Invalid output format '{output_format}'. "
+            "Must be 'table' or 'json'.",
+            err=True,
+        )
+        sys.exit(1)
+
     # Determine versions file path
     if versions_path is None:
         # Check environment variable
@@ -76,54 +100,13 @@ def main(file_path: Path = None, versions_path: Path = None):
         try:
             versions = load_versions_file(str(versions_path))
             dependencies = check_versions(dependencies, versions)
-            print_full_table(dependencies)
         except Exception as e:
             click.echo(f"Error loading versions file: {e}", err=True)
             sys.exit(1)
-    else:
-        # No versions file, just print simple table
-        print_simple_table(dependencies)
 
-
-def print_simple_table(dependencies: list[Dependency]):
-    """
-    Print a simple table of dependencies.
-
-    Args:
-        dependencies: List of Dependency objects
-    """
-    # Header
-    click.echo(f"{'Package':<30} {'Current':<20}")
-    click.echo("-" * 52)
-
-    # Rows
-    for dep in dependencies:
-        package_name = dep.name[:30]  # Truncate if too long
-        current_ver = dep.current[:20]  # Truncate if too long
-        click.echo(f"{package_name:<30} {current_ver:<20}")
-
-
-def print_full_table(dependencies: list[Dependency]):
-    """
-    Print a full table of dependencies with version information.
-
-    Args:
-        dependencies: List of Dependency objects with version info
-    """
-    # Header
-    click.echo(f"{'Package':<30} {'Current':<20} {'Latest':<20} {'Distance':<15}")
-    click.echo("-" * 87)
-
-    # Rows
-    for dep in dependencies:
-        package_name = dep.name[:30]  # Truncate if too long
-        current_ver = dep.current_parsed or dep.current
-        current_ver = current_ver[:20]  # Truncate if too long
-        latest_ver = dep.latest if dep.latest else "<missing>"
-        latest_ver = latest_ver[:20]  # Truncate if too long
-        distance = dep.distance or "unknown"
-
-        click.echo(f"{package_name:<30} {current_ver:<20} {latest_ver:<20} {distance:<15}")
+    # Format and output results
+    output = format_output(dependencies, output_format)
+    click.echo(output)
 
 
 if __name__ == "__main__":

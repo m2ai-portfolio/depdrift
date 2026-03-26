@@ -1,0 +1,28 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /home/apexaipc/projects/yce-harness/generations/metroplex-ideaforge-142/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/apexaipc/projects/yce-harness/generations/metroplex-ideaforge-142
+collecting ... collected 20 items
+
+tests/test_output.py::TestFormatTable::test_format_table_with_version_info PASSED [  5%]
+tests/test_output.py::TestFormatTable::test_format_table_without_version_info PASSED [ 10%]
+tests/test_output.py::TestFormatTable::test_format_table_truncate_long_versions PASSED [ 15%]
+tests/test_output.py::TestFormatTable::test_format_table_with_missing_latest PASSED [ 20%]
+tests/test_output.py::TestFormatTable::test_format_table_empty_list PASSED [ 25%]
+tests/test_output.py::TestFormatTable::test_format_table_alignment PASSED [ 30%]
+tests/test_output.py::TestFormatJson::test_format_json_basic PASSED      [ 35%]
+tests/test_output.py::TestFormatJson::test_format_json_with_null_values PASSED [ 40%]
+tests/test_output.py::TestFormatJson::test_format_json_without_parsed_version PASSED [ 45%]
+tests/test_output.py::TestFormatJson::test_format_json_empty_list PASSED [ 50%]
+tests/test_output.py::TestFormatJson::test_format_json_indentation PASSED [ 55%]
+tests/test_output.py::TestFormatOutput::test_format_output_table PASSED  [ 60%]
+tests/test_output.py::TestFormatOutput::test_format_output_json PASSED   [ 65%]
+tests/test_output.py::TestFormatOutput::test_format_output_invalid_format PASSED [ 70%]
+tests/test_output.py::TestIntegrationWithMain::test_json_output_flag PASSED [ 75%]
+tests/test_output.py::TestIntegrationWithMain::test_env_var_json_output PASSED [ 80%]
+tests/test_output.py::TestIntegrationWithMain::test_json_flag_overrides_env_var PASSED [ 85%]
+tests/test_output.py::TestIntegrationWithMain::test_no_manifest_error PASSED [ 90%]
+tests/test_output.py::TestIntegrationWithMain::test_invalid_output_format_env_var PASSED [ 95%]
+tests/test_output.py::TestIntegrationWithMain::test_table_output_without_versions_file PASSED [100%]
+
+============================== 20 passed in 0.04s ==============================
