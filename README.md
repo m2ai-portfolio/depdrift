@@ -1,3 +1,5 @@
+
+
 <p align="center">
   <img src="assets/infographic.png" alt="DepDrift" width="800">
 </p>
@@ -12,106 +14,123 @@
 </p>
 
 ## What is this?
-DepDrift is a command‑line utility that scans dependency manifest files and reports how many versions each package lags behind the latest release, sorting the results by update severity. It is ideal for solo maintainers or small teams who want a quick, local view of dependency staleness without setting up external bots.
-
+DepDrift is a command‑line utility that scans Python and Node dependency files to determine how outdated each package is, categorizing the gap into patch, minor, or major version differences. It helps solo developers quickly assess dependency staleness without needing external services.  
 Example:
 ```
-$ depdrift --file requirements.txt
-Package        Current  Latest  Severity
-requests       2.25.1   2.31.0  minor
-numpy          1.21.0   1.24.2  major
+$ depdrift check --format table requirements.txt
++----------+------------+-----------+----------+
+| Package  | Current    | Latest    | Severity |
+|----------|------------|-----------|----------|
+| requests | 2.25.1     | 2.31.0    | minor    |
+| django   | 4.0.0      | 4.2.0     | minor    |
+| numpy    | 1.22.0     | 2.0.0     | major    |
++----------+------------+-----------+----------+
 ```
 
 ## Problem
-Dependency staleness accumulates silently in projects, especially those maintained by solo developers. Existing tools (dependabot, renovate) require hosted infrastructure; no simple CLI gives a local staleness report.
+Dependency staleness accumulates silently in projects, especially those maintained by solo developers. Existing tools such as Dependabot and Renovate require hosted infrastructure; there is no simple CLI that provides a local staleness report.
 
 ## Features
 | Feature | Description |
 |---------|-------------|
-| Multi‑format support | Parses requirements.txt, pyproject.toml, and package.json files |
-| Version distance calculation | Computes exact version difference between installed and latest releases |
-| Severity grouping | Classifies updates as patch, minor, or major based on semantic versioning |
-| Dual output modes | Renders results as a terminal table or machine‑readable JSON |
-| Auto‑detect mode | Automatically locates a supported manifest in the current directory |
-| Quiet flag | Suppresses informational messages for CI‑friendly output |
+| Multi‑format parsing | Reads requirements.txt, pyproject.toml, and package.json |
+| Live version lookup | Queries PyPI and npm registries forlatest versions |
+| Semantic severity grouping | Classifies drift as patch, minor, or major |
+| Flexible output | Human‑readable table or machine‑friendly JSON |
+| Auto‑detect | Finds a dependency file in the current directory if none is given |
+| Graceful unknown‑package handling | Skips packages not present in registries |
+| CI‑friendly JSON mode | Can be forced via `DEPDRIFT_OUTPUT=json` |
+| Scriptable exit code | Returns non‑zero when any outdated dependency is found |
 
 ## Quick Start
 1. Clone the repository:  
-   `git clone https://github.com/yourusername/DepDrift.git`
-2. Enter the project directory:  
-   `cd DepDrift`
-3. Install the package in editable mode:  
-   `pip install -e .`
-4. Run a basic check on a requirements file:  
-   `depdrift --file requirements.txt`
+   `git clone https://github.com/<your-user>/DepDrift.git`
+2. Install the package in editable mode:  
+   `cd DepDrift && pip install -e .`
+3. Run a basic check:  
+   `depdrift check`
 
 ## Examples
-**Basic requirements check**  
-Run DepDrift on a Python project’s requirements file.  
+**Example 1 – Table output for a Python project**  
+Command:  
+`depdrift check --format table requirements.txt`  
+Output:  
 ```
-$ depdrift --file requirements.txt
-Package        Current  Latest  Severity
-requests       2.25.1   2.31.0  minor
-numpy          1.21.0   1.24.2  major
++----------+------------+-----------+----------+
+| Package  | Current    | Latest    | Severity |
+|----------|------------|-----------|----------|
+| requests | 2.25.1     | 2.31.0    | minor    |
+| django   | 4.0.0      | 4.2.0     | minor    |
+| numpy    | 1.22.0     | 2.0.0     | major    |
++----------+------------+-----------+----------+
 ```
 
-**JSON output for CI integration**  
-Generate a JSON payload that can be consumed by automated scripts.  
-```
-$ depdrift --file pyproject.toml --output json
+**Example 2 – JSON output for a Node project**  
+Command:  
+`depdrift check --format json package.json`  
+Output:  
+```json
 {
-  "dependencies": [
-    {"name": "requests", "current": "2.25.1", "latest": "2.31.0", "severity": "minor"},
-    {"name": "django",   "current": "3.2.0",   "latest": "4.2.0",   "severity": "major"}
-  ]
+  "lodash": {"current": "4.17.15", "latest": "4.17.21", "severity": "patch"},
+  "express": {"current": "4.17.1", "latest": "5.0.0", "severity": "major"},
+  "react": {"current": "17.0.2", "latest": "18.2.0", "severity": "major"}
 }
 ```
 
-**Package.json scan with quiet mode**  
-Check a Node.js project while suppressing extra output.  
+**Example 3 – Auto‑detect and suppress unknown packages**  
+Command:  
+`depdrift check`  
+Output (when a pyproject.toml is present):  
 ```
-$ depdrift --file package.json --quiet
-lodash   4.17.15  4.17.21  patch
-express  4.16.0   4.18.2   minor
++----------------+------------+-----------+----------+
+| Package        | Current    | Latest    | Severity |
+|----------------|------------|-----------|----------|
+| fastapi        | 0.68.0     | 0.103.0   | minor    |
+| pydantic       | 1.8.2      | 2.5.0     | major    |
++----------------+------------+-----------+----------+
 ```
 
 ## File Structure
 ```
 DepDrift/
-  depdrift/          # Core source code
-    __init__.py
-    __main__.py      # CLI entry point
-    main.py          # Orchestrates parsing, checking, and output
-    models.py        # Data models for dependencies and releases
-    output.py        # Table and JSON formatting logic
-    parsers.py       # Parsers for requirements.txt, pyproject.toml, package.json
-    utils.py         # Helper functions (version comparison, file detection)
-    version.py       # Version metadata
-  tests/             # Unit test suite
-    test_parsers.py
-    test_output.py
-    test_version.py
-  .gitignore
-  README.md
-  init.sh
+├── depdrift/          # Source code (CLI, parsers, version logic, output)
+│   ├── __init__.py
+│   ├── __main__.py    # Entry point
+│   ├── main.py
+│   ├── models.py
+│   ├── output.py
+│   ├── parsers.py
+│   ├── utils.py
+│   └── version.py
+├── tests/             # Unit tests
+│   ├── test_output.py
+│   ├── test_parsers.py
+│   └── test_version.py
+├── assets/            # Infographic used in README
+│   └── infographic.png
+├── screenshots/       # Verification screenshots (not required for users)
+├── .gitignore
+├── init.sh            # Setup script
+└── README.md
 ```
 
 ## Tech Stack
 | Technology | Purpose |
 |------------|---------|
-| Python 3.8+ | Core language |
-| packaging   | Version parsing and comparison |
-| toml        | Reading pyproject.toml files |
-| json        | Built‑in handling of package.json |
-| setuptools  | Project packaging and distribution |
+| Python 3.9+ | Core language |
+| requests   | HTTP client for PyPI and npm registries |
+| packaging  | Version parsing and comparison |
+| toml       | Parsing pyproject.toml files |
+| json (std‑lib) | JSON output generation |
 
 ## Contributing
-Fork the repo, make your changes, run the test suite, and submit a pull request.  
-Please keep code style consistent with the existing base.
+1. Fork the repository.  
+2. Create a feature branch (`git checkout -b feature/foo`).  
+3. Make changes, add tests, and ensure the test suite passes.  
+4. Submit a pull request for review.
 
 ## License
 MIT
 
 ## Author
-```
 Matthew Snow -- [M2AI](https://m2ai.co) | [@m2ai-portfolio](https://github.com/m2ai-portfolio)
