@@ -1,104 +1,117 @@
-# DepDrift
+<p align="center">
+  <img src="assets/infographic.png" alt="DepDrift" width="800">
+</p>
 
-A CLI tool to analyze dependency staleness across Python and Node.js projects.
+<h3 align="center">CLI tool that reads requirements.txt/pyproject.toml/package.json and reports how far behind each dependency is from latest, grouped by severity (patch/minor/major). JSON or terminal table output.</h3>
 
-DepDrift reads your project's dependency manifest (`requirements.txt`, `pyproject.toml`, or `package.json`), compares each declared version against a user-supplied "latest versions" lookup file, and reports how far behind each dependency is -- grouped by semantic version distance (patch, minor, major).
+<p align="center">
+  <a href="#quick-start">Quick Start</a> &bull;
+  <a href="#features">Features</a> &bull;
+  <a href="#examples">Examples</a> &bull;
+  <a href="#contributing">Contributing</a>
+</p>
+
+## What is this?
+DepDrift is a command‑line utility that scans dependency manifest files and reports how many versions each package lags behind the latest release, sorting the results by update severity. It is ideal for solo maintainers or small teams who want a quick, local view of dependency staleness without setting up external bots.
+
+Example:
+```
+$ depdrift --file requirements.txt
+Package        Current  Latest  Severity
+requests       2.25.1   2.31.0  minor
+numpy          1.21.0   1.24.2  major
+```
+
+## Problem
+Dependency staleness accumulates silently in projects, especially those maintained by solo developers. Existing tools (dependabot, renovate) require hosted infrastructure; no simple CLI gives a local staleness report.
 
 ## Features
-- **Multi-format manifest parsing** -- supports `requirements.txt`, `pyproject.toml` (PEP 621), and `package.json` (both `dependencies` and `devDependencies`)
-- **Auto-detection** -- if no `--file` is given, searches the current directory for `pyproject.toml`, `requirements.txt`, or `package.json` (in that order)
-- **Semver distance classification** -- categorizes each dependency as `up-to-date`, `patch`, `minor`, `major`, or `unknown`
-- **Flexible output** -- ASCII table (default) or JSON, controlled via `--json` flag or `DEPDRIFT_OUTPUT` env var
-- **Version specifier handling** -- strips operators (`>=`, `~=`, `^`, `~`, `==`) to extract bare version numbers for comparison
-
-## Project Structure
-```
-depdrift/
-  __init__.py
-  __main__.py     # python -m depdrift entry point
-  main.py         # Click CLI: --file, --versions, --json options
-  parsers.py      # Manifest parsers (requirements.txt, pyproject.toml, package.json)
-  models.py       # Dependency dataclass (name, current, latest, distance)
-  version.py      # Version extraction, semver distance computation, versions file loader
-  output.py       # ASCII table and JSON formatters
-  utils.py        # Manifest auto-detection, package name normalization
-tests/            # pytest test suite
-init.sh           # Bootstrap script
-```
+| Feature | Description |
+|---------|-------------|
+| Multi‑format support | Parses requirements.txt, pyproject.toml, and package.json files |
+| Version distance calculation | Computes exact version difference between installed and latest releases |
+| Severity grouping | Classifies updates as patch, minor, or major based on semantic versioning |
+| Dual output modes | Renders results as a terminal table or machine‑readable JSON |
+| Auto‑detect mode | Automatically locates a supported manifest in the current directory |
+| Quiet flag | Suppresses informational messages for CI‑friendly output |
 
 ## Quick Start
+1. Clone the repository:  
+   `git clone https://github.com/yourusername/DepDrift.git`
+2. Enter the project directory:  
+   `cd DepDrift`
+3. Install the package in editable mode:  
+   `pip install -e .`
+4. Run a basic check on a requirements file:  
+   `depdrift --file requirements.txt`
 
-```bash
-git clone https://github.com/m2ai-portfolio/depdrift.git
-cd depdrift
-./init.sh
-
-# Run against a requirements file with a versions lookup
-python -m depdrift --file requirements.txt --versions versions.json
-
-# JSON output
-python -m depdrift --file requirements.txt --versions versions.json --json
+## Examples
+**Basic requirements check**  
+Run DepDrift on a Python project’s requirements file.  
+```
+$ depdrift --file requirements.txt
+Package        Current  Latest  Severity
+requests       2.25.1   2.31.0  minor
+numpy          1.21.0   1.24.2  major
 ```
 
-## The `versions.json` File
-
-DepDrift compares your declared dependency versions against a lookup file that maps package names to their latest known versions. This file is a flat JSON object:
-
-```json
+**JSON output for CI integration**  
+Generate a JSON payload that can be consumed by automated scripts.  
+```
+$ depdrift --file pyproject.toml --output json
 {
-  "requests": "2.31.0",
-  "flask": "3.0.2",
-  "click": "8.1.7",
-  "react": "18.2.0",
-  "express": "4.18.3"
+  "dependencies": [
+    {"name": "requests", "current": "2.25.1", "latest": "2.31.0", "severity": "minor"},
+    {"name": "django",   "current": "3.2.0",   "latest": "4.2.0",   "severity": "major"}
+  ]
 }
 ```
 
-You supply this file yourself -- it can be generated from `pip index versions`, `npm view <pkg> version`, or any registry API. DepDrift intentionally does not call external registries at runtime, keeping it offline-safe and deterministic.
-
-If no `--versions` flag is provided, DepDrift looks for `versions.json` in the current directory, or checks the `DEPDRIFT_VERSFILE` environment variable.
-
-## Supported Manifest Formats
-
-| Format | Parser | Notes |
-|--------|--------|-------|
-| `requirements.txt` | `parse_requirements_txt` | Skips comments, `-r`/`-e`/`--` lines. Handles `>=`, `==`, `~=` specifiers. |
-| `pyproject.toml` | `parse_pyproject_toml` | Reads `[project.dependencies]` (PEP 621). Uses `tomllib`. |
-| `package.json` | `parse_package_json` | Merges `dependencies` + `devDependencies`. Preserves `^`/`~` prefixes for display. |
-
-## Example Output
-
-**Table format (default):**
+**Package.json scan with quiet mode**  
+Check a Node.js project while suppressing extra output.  
 ```
-Package                        Current              Latest               Distance
----------------------------------------------------------------------------------------
-requests                       2.28.1               2.31.0               minor
-flask                          2.3.0                3.0.2                major
-click                          8.1.7                8.1.7                up-to-date
-numpy                          1.24.0               <missing>            unknown
+$ depdrift --file package.json --quiet
+lodash   4.17.15  4.17.21  patch
+express  4.16.0   4.18.2   minor
 ```
 
-**JSON format (`--json`):**
-```json
-[
-  {"package": "requests", "current": "2.28.1", "latest": "2.31.0", "distance": "minor"},
-  {"package": "flask", "current": "2.3.0", "latest": "3.0.2", "distance": "major"},
-  {"package": "click", "current": "8.1.7", "latest": "8.1.7", "distance": "up-to-date"}
-]
+## File Structure
+```
+DepDrift/
+  depdrift/          # Core source code
+    __init__.py
+    __main__.py      # CLI entry point
+    main.py          # Orchestrates parsing, checking, and output
+    models.py        # Data models for dependencies and releases
+    output.py        # Table and JSON formatting logic
+    parsers.py       # Parsers for requirements.txt, pyproject.toml, package.json
+    utils.py         # Helper functions (version comparison, file detection)
+    version.py       # Version metadata
+  tests/             # Unit test suite
+    test_parsers.py
+    test_output.py
+    test_version.py
+  .gitignore
+  README.md
+  init.sh
 ```
 
-## Environment Variables
+## Tech Stack
+| Technology | Purpose |
+|------------|---------|
+| Python 3.8+ | Core language |
+| packaging   | Version parsing and comparison |
+| toml        | Reading pyproject.toml files |
+| json        | Built‑in handling of package.json |
+| setuptools  | Project packaging and distribution |
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DEPDRIFT_VERSFILE` | Path to the versions JSON lookup file | `versions.json` |
-| `DEPDRIFT_OUTPUT` | Output format (`table` or `json`) | `table` |
-
-## Running Tests
-```bash
-pip install -e ".[dev]"
-pytest tests/
-```
+## Contributing
+Fork the repo, make your changes, run the test suite, and submit a pull request.  
+Please keep code style consistent with the existing base.
 
 ## License
 MIT
+
+## Author
+```
+Matthew Snow -- [M2AI](https://m2ai.co) | [@m2ai-portfolio](https://github.com/m2ai-portfolio)
